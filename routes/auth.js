@@ -15,16 +15,28 @@ router.post('/join', not_logged_in, async (req, res, next) => {
             nick: nickname,
             address,
         });
-        // return res.redirect('http://localhost:3000/');
         return res.redirect('/');
     } catch(error) {
         console.error(error);
         return next(error);
     }
 });
-// 이메일 중복확인
-router.get('/email?:email', async (req, res, next) => {
-    console.log("= "+ req.query.email +" =");
+// 카카오 로그인 추가 정보 입력
+router.post('/join/kakao', async (req, res, next) => {
+    const { nickname, address } = req.body;
+    try {
+        await User.update({
+            nick: nickname,
+            address,
+        }, { where: { id: req.user.id } })
+        return res.redirect('/');
+    } catch(error) {
+        console.error(error);
+        return next(error);
+    }
+});
+// 이메일 중복 확인
+router.get('/email?:email', async (req, res) => {
     const email = req.query.email;
     try {
         const ex_email = await User.findOne({ where: { email } })
@@ -38,8 +50,8 @@ router.get('/email?:email', async (req, res, next) => {
         return next(error);
     }
 });
-// 닉네임 중복확인
-router.get('/nick?:nick', async (req, res, next) => {
+// 닉네임 중복 확인
+router.get('/nick?:nick', async (req, res) => {
     const nick = req.query.nick;
     try {
         const ex_nick = await User.findOne({ where: { nick } })
@@ -61,16 +73,14 @@ router.post('/login', not_logged_in, (req, res, next) => {
             return next(auth_error);
         }
         if(!user) {
-            //
+            
         }
         return req.logIn(user, (login_error) => {
             if (login_error) {
                 console.error(login_error);
                 return next(login_error);
             }
-            // return res.send(user);
-            // return res.redirect('http://localhost:3000');
-            return res.redirect('/post');    
+            return res.redirect('/');    
         });
     })(req, res, next);
 });
@@ -78,15 +88,14 @@ router.post('/login', not_logged_in, (req, res, next) => {
 router.get('/logout', logged_in, (req, res) => {
     req.logout();
     req.session.destroy();
-    // res.redirect('http://localhost:3000/');
     return res.redirect('/');
 });
 // 카카오 로그인
 router.get('/kakao', passport.authenticate('kakao'));
 router.get('/kakao/callback', passport.authenticate('kakao', {
-    failureRedirect: 'http://localhost:3000/',
+    failureRedirect: '/',
 }), (req, res) => {
-    res.redirect('http://localhost:3000/');
+    res.redirect('/');
 });
 
 module.exports = router;

@@ -8,7 +8,7 @@ module.exports = () => {
     passport.serializeUser((user, done) => {
         done(null, user.id);
     });
-    // 세션에 user.id를 이용하여, user데이터 습득
+    // 세션에 user.id를 이용하여, user데이터 찾기
     passport.deserializeUser((id, done) => {
         User.findOne({ where: { id } })
         .then(user => done(null, user))

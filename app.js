@@ -33,7 +33,7 @@ app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'static')));
 app.use('img', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookie_parser(process.env.COOKIE_SECRET));
 app.use(session({
     resave: false,

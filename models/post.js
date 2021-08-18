@@ -11,6 +11,19 @@ module.exports = class Post extends Sequelize.Model {
                 type: Sequelize.STRING(1000),
                 allowNull: false,
             },
+            price: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: '무료',
+            },
+            date: {
+                type: Sequelize.TIME,
+                allowNull: true,
+            },
+            board: {
+                type: Sequelize.ENUM('빌려주세요', '빌려줄게요'),
+                allowNull: false,
+            }
         }, {
             sequelize,
             timestamps: true,
