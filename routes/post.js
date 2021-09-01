@@ -1,10 +1,12 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const Sequelize = require('sequelize');
 const fs = require('fs');
 const { User, Post, Image } = require('../models');
 const { logged_in } = require('./status');
 const router = express.Router();
+const { like } = Sequelize.Op;
 // 업로드 폴더 생성
 try {
     fs.readdirSync('uploads');
@@ -20,15 +22,18 @@ router.get('/', async (req, res, next) => {
                 model: User,
                 attributes: ['nick'],
             },
+            // where: { board: '빌려줄게요'},
+            // where: { board: '빌려주세요'},
             order: [['createdAt', 'DESC']],
         });
+        // await res.send(posts); 
         await res.render('board', { posts });
     }catch (err) {
         console.error(err);
         next(err);
     }
 });
-// 설정
+// 멀터
 const image_upload = multer({
     storage: multer.diskStorage({
         destination(req, file, cb) {
@@ -44,15 +49,22 @@ const image_upload = multer({
 });
 const post_upload = multer();
 // 게시글 작성 뷰
-router.get('/new', logged_in, (req, res) => {
-    res.render('new');
+router.get('/lend', logged_in, (req, res) => {
+    res.render('lend');
+});
+router.get('/borrow', logged_in, (req, res) => {
+    res.render('borrow');
 });
 // 게시글 작성
-router.post('/write', logged_in, post_upload.array('img', 5), async (req, res, next) => {
+router.post('/write/lend', logged_in, async (req, res, next) => {
     try {
         await Post.create({
             title: req.body.title,
             body: req.body.body,
+            price: req.body.price,
+            start_date: req.body.startDate,
+            end_date: req.body.endDate,
+            board: '빌려줄게요',
             user_id: req.user.id,
         });
     res.redirect('/post');
@@ -61,6 +73,24 @@ router.post('/write', logged_in, post_upload.array('img', 5), async (req, res, n
         return next(err);
     }
 });
+router.post('/write/borrow', logged_in, async (req, res, next) => {
+    try {
+        await Post.create({
+            title: req.body.title,
+            body: req.body.body,
+            price: req.body.price,
+            start_date: req.body.startDate,
+            end_date: req.body.endDate,
+            board: '빌려주세요',
+            user_id: req.user.id,
+        });
+    res.redirect('/post');
+    } catch (err) {
+        console.error(err);
+        return next(err);
+    }
+});
+router.post('/comment')
 // 이미지 업로드
 router.post('/img', logged_in, image_upload.array('img', 5), async (req, res, next) => {
     for (let i = 0; i < req.files.length; i++) {
@@ -78,14 +108,32 @@ router.get('/:id', async (req, res, next) => {
             where: { id: req.params.id },
             include: {
                 model: User,
-                attributes: ['nick'],
+                attributes: ['nick', 'address'],
             },
         });
         await res.render('show', { post });
+        // await res.send(post);
     } catch (err) {
         console.error(err);
         return next(err); 
     }
 });
+// 게시글 검색
+router.get('/search/:searchWord', async(req, res) => {
+    try{
+        const result = await Post.findAll({
+            where: { title: { [like]: '%' + req.params.searchWord + '%' }},
+            include: {
+                model: User,
+                attributes: ['nick'],
+            },
+        })
+        console.log(result);
+        res.send(result);
+    } catch (err) {
+        console.error(err);
+        return next(err); 
+    }
+})
 
 module.exports = router;

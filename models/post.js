@@ -13,11 +13,15 @@ module.exports = class Post extends Sequelize.Model {
             },
             price: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
-                defaultValue: '무료',
+                allowNull: true,
+                defaultValue: 0,
             },
-            date: {
-                type: Sequelize.TIME,
+            start_date: {
+                type: Sequelize.DATEONLY,
+                allowNull: true,
+            },
+            end_date: {
+                type: Sequelize.DATEONLY,
                 allowNull: true,
             },
             board: {
