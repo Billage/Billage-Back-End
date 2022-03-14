@@ -13,10 +13,7 @@
     <div>희망 가격: <%= post.price %>원</div> <br>
     <div>희망 기간: <%= post.start_date %> ~ <%= post.end_date %></div> <br>
     <div><%= post.createdAt %></div> <br>
-    <form action="/post/comment" method="POST">
-        댓글 <input type="text" name="comment">
-        <button type="submit">작성하기</button>
-    </form>
+    <button><a href="/chat/<%= post.id %>">채팅하기</a></button>
     <button><a href="/post">뒤로 가기</a></button>
 </body>
 </html>

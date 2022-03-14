@@ -4,8 +4,10 @@ const config = require('../config/config')[env];
 
 const User = require('./user');
 const Post = require('./post');
-const Image = require('./image');
-const Comment = require('./comment');
+const Wish = require('./wish');
+const Room = require('./room');
+const Chat = require('./chat');
+const Review = require('./review');
 
 const db = {};
 const sequelize = new Sequelize(
@@ -16,24 +18,25 @@ db.sequelize = sequelize;
 
 db.User = User;
 db.Post = Post;
-db.Image = Image;
-db.Comment = Comment;
+db.Wish = Wish;
+db.Room = Room;
+db.Chat = Chat;
+db.Review = Review;
 
 User.init(sequelize);
 Post.init(sequelize);
-Image.init(sequelize);
-Comment.init(sequelize);
+Wish.init(sequelize);
+Room.init(sequelize);
+Chat.init(sequelize);
+Review.init(sequelize);
 
-User.hasMany(Post, {foreignKey: 'user_id'});
-Post.belongsTo(User, {foreignKey: 'user_id'});
+User.hasMany(Post, {foreignKey: 'userId'});
+Post.belongsTo(User, {foreignKey: 'userId'});
 
-User.hasMany(Comment, {foreignKey: 'user_id'});
-Comment.belongsTo(User, {foreignKey: 'user_id'});
+Post.hasMany(Wish, {foreignKey: 'postId'});
+Wish.belongsTo(Post, {foreignKey: 'postId'});
 
-Post.hasMany(Image, {foreignKey: 'post_id'});
-Image.belongsTo(Post, {foreignKey: 'post_id'});
-
-Post.hasMany(Comment, {foreignKey: 'post_id'});
-Comment.belongsTo(Post, {foreignKey: 'post_id'});
+Post.hasMany(Wish, {foreignKey: 'postId'});
+Review.belongsTo(Post, {foreignKey: 'postId'});
 
 module.exports = db;

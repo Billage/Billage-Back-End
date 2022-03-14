@@ -3,6 +3,10 @@ const Sequelize = require('sequelize');
 module.exports = class Post extends Sequelize.Model {
     static init(sequelize) {
         return super.init({
+            nick: {
+                type: Sequelize.STRING(15),
+                allowNull: false,
+            },
             title: {
                 type: Sequelize.STRING(30),
                 allowNull: false,
@@ -12,25 +16,35 @@ module.exports = class Post extends Sequelize.Model {
                 allowNull: false,
             },
             price: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.STRING,
                 allowNull: true,
                 defaultValue: 0,
             },
-            start_date: {
+            startDate: {
                 type: Sequelize.DATEONLY,
                 allowNull: true,
             },
-            end_date: {
+            endDate: {
                 type: Sequelize.DATEONLY,
                 allowNull: true,
+            },
+            address: {
+                type: Sequelize.STRING,
+                allowNull: false,
             },
             board: {
                 type: Sequelize.ENUM('빌려주세요', '빌려줄게요'),
                 allowNull: false,
-            }
+            },
+            date: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
+            url: {
+                type: Sequelize.STRING,
+            },
         }, {
             sequelize,
-            timestamps: true,
             underscored: false,
             modelName: 'Post',
             tableName: 'posts',

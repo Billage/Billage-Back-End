@@ -10,7 +10,8 @@ router.get('/login', (req, res) => {
 router.get('/join', (req, res) => {
     res.render('join');
 });
-router.get('/chat', (req, res) => {
-    res.render('chat');
-})
+router.get('/upload', (req, res) => {
+    res.render('upload');
+});
+
 module.exports = router;

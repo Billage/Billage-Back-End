@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        @charset "utf-8";
+
+        .app__wrap {
+            margin: 0 auto;
+            padding: 50px 0 0;
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            min-width: 200px;
+            font-size: 14px;
+            border-top: 20px solid #5c007a;
+            box-sizing: border-box;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .app__info {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 50px;
+            text-align: center;
+            line-height: 50px;
+            color: #fff;
+            background: #8e24aa;
+        }
+
+        .app__window {
+            overflow-y: auto;
+            padding: 10px 20px;
+            height: 400px;
+            background: #e1e2e1;
+        }
+
+        .output__user {
+            margin: 0;
+            margin-bottom: 10px;
+            color: black;
+        }
+
+        .output__user__name {
+            margin-right: 10px;
+            font-weight: 700;
+            color: black;
+        }
+
+        .output__user__me {
+            margin: 0;
+            margin-bottom: 10px;
+            color: blue;
+        }
+
+        .output__user__name__me {
+            margin-right: 10px;
+            font-weight: 700;
+            color: blue;
+        }
+
+        .app__input__wrap {
+            padding: 10px;
+            background: #f5f5f6;
+        }
+
+        .app__input__wrap:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+
+        .app__input {
+            float: left;
+            display: block;
+            width: 80%;
+            height: 25px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .app__button {
+            float: left;
+            display: block;
+            width: 20%;
+            height: 25px;
+            border: 1px solid #ccc;
+            border-left: 0;
+            background: #fff;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+    </style>
+    <title>chat-app</title>
+</head>
+
+<body>
+    <div class="app__wrap">
+        <div id="info" class="app__info"></div>
+        <div id="chatWindow" class="app__window"></div>
+        <div class="app__input__wrap">
+            <input id="chatInput" type="text" class="app__input" autofocus placeholder="대화를 입력하세요.">
+            <button id="chatMessageSendBtn" class="app__button">전송</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        'use strict';
+        // socket.io 실행 후 해당객체를 리턴받아 socket 변수에 담는다.
+        var socket = io.connect('http://localhost:7000/chat');
+        var chatWindow = document.getElementById('chatWindow');
+        var sendButton = document.getElementById('chatMessageSendBtn');
+        var chatInput = document.getElementById('chatInput');
+        socket.on('join', (data) => {
+            console.log('namespace ');
+        });
+        // connect 이벤트는 소켓이 연결되면 호출
+        // socket.on('connect', () => {
+        //     var postId = prompt('postId', '');
+        //     var userId = prompt('userId', '');
+        //     const data = {
+        //         postId,
+        //         userId,
+        //     }
+        //     socket.emit('newUserConnect', data);
+        // });
+        // 전달했던 data를 받아서 처리
+        socket.on('updateMessage', (data) => {
+            // 시스템이 날리는 메세지
+            if (data.name == 'SERVER') {
+                // info DIV 태그에 메세지값을 입력
+                var info = document.getElementById('info');
+                info.innerHTML = data.message
+                setTimeout(() => {
+                    info.innerText = '';
+                }, 10000);
+                // 사람들이 날리는 메세지
+            } else {
+                // 사용자가 전달한 텍스트는 drawChatMessage()함수를 통해 
+                // 객체를 생성해 chatWindow에 삽입
+                chatWindow.appendChild(drawChatMessage(data));
+                // 항상최신대화 보기 
+                // :: chatWindow의 스크롤을 chatWindow 스크롤 높이만큼 내려주자
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        });
+        // 채팅은 텍스트 갯수가 계속 늘어나야하기 때문에 객체로 만들어 append 해줍니다.
+        // data에는 대화명(name)과 메세지(message)가 있습니다.
+        function drawChatMessage(data) {
+            // createElement를 사용하여 태그를 생성
+            // 전체를 감싸줄 객체
+            var wrap = document.createElement('p');
+            // 메세지를 담을 객체 
+            var message = document.createElement('span');
+            // 대화명을 담을 객체
+            var name = document.createElement('span');
+            // 태그에 데이터 삽입
+            name.innerText = data.name;
+            message.innerText = data.message;
+            // 객체를 컨트롤 하기위해 class나 id를 추가해 줍니다.
+            name.classList.add('output__user__name');
+            message.classList.add('output__user__message');
+            wrap.classList.add('output__user');
+            wrap.dataset.id = socket.id;
+            // wrap 객체안에 대화명과 메세지를 담은 객체를 넣어주고 wrap객체를 return해줍니다.
+            // 리턴된 객체는 updateMessage 채팅창에 넣어줍니다.
+            wrap.appendChild(name);
+            wrap.appendChild(message);
+            return wrap;
+        }
+        sendButton.addEventListener('click', () => {
+            // 입력한 메세지 처리
+            var message = chatInput.value;
+            if (!message) return false;
+            socket.emit('sendMessage', {
+                message
+            });
+            chatInput.value = '';
+        });
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.keyCode == 13) {
+                // 입력한 메세지 처리
+                var message = chatInput.value;
+                if (!message) return false;
+                socket.emit('sendMessage', {
+                    message
+                });
+                chatInput.value = '';
+            }
+        });
+    </script>
+</body>
+
+</html>

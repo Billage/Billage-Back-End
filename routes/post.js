@@ -1,12 +1,10 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const Sequelize = require('sequelize');
 const fs = require('fs');
-const { User, Post, Image } = require('../models');
-const { logged_in } = require('./status');
+const { User, Post } = require('../models');
+const { loggedIn } = require('./status');
 const router = express.Router();
-const { like } = Sequelize.Op;
 // 업로드 폴더 생성
 try {
     fs.readdirSync('uploads');
@@ -14,126 +12,198 @@ try {
     console.error('uploads 폴더 생성');
     fs.mkdirSync('uploads');
 }
-// 게시판
-router.get('/', async (req, res, next) => {
-    try {
-        const posts = await Post.findAll({
-            include: {
-                model: User,
-                attributes: ['nick'],
-            },
-            // where: { board: '빌려줄게요'},
-            // where: { board: '빌려주세요'},
-            order: [['createdAt', 'DESC']],
-        });
-        // await res.send(posts); 
-        await res.render('board', { posts });
-    }catch (err) {
-        console.error(err);
-        next(err);
-    }
-});
 // 멀터
-const image_upload = multer({
+const imgUpload = multer({
     storage: multer.diskStorage({
         destination(req, file, cb) {
             cb(null, 'uploads/');
         },
         filename(req, file, cb) {
             const ext = path.extname(file.originalname);
-            console.log(ext);
-            cb(null, path.basename(file.originalname, ext) + '_' + Date.now() + ext);
+            cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
         },
     }),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
 });
-const post_upload = multer();
-// 게시글 작성 뷰
-router.get('/lend', logged_in, (req, res) => {
-    res.render('lend');
-});
-router.get('/borrow', logged_in, (req, res) => {
-    res.render('borrow');
-});
-// 게시글 작성
-router.post('/write/lend', logged_in, async (req, res, next) => {
-    try {
-        await Post.create({
-            title: req.body.title,
-            body: req.body.body,
-            price: req.body.price,
-            start_date: req.body.startDate,
-            end_date: req.body.endDate,
-            board: '빌려줄게요',
-            user_id: req.user.id,
-        });
-    res.redirect('/post');
-    } catch (err) {
-        console.error(err);
-        return next(err);
+//빌려줄게요 게시판
+router.get('/lend', async (req, res, next) => {
+    if (req.user) {
+        try {
+            const posts = await Post.findAll({
+                where: {
+                    board: '빌려줄게요',
+                    address: req.user.address,
+                },
+                order: [
+                    ['createdAt', 'DESC']
+                ],
+            });
+            res.send(posts);
+        } catch (err) {
+            next(err);
+        }
+    } else {
+        try {
+            const posts = await Post.findAll({
+                where: {
+                    board: '빌려줄게요',
+                },
+                order: [
+                    ['createdAt', 'DESC']
+                ],
+            });
+            res.send(posts);
+        } catch (err) {
+            next(err);
+        }
     }
 });
-router.post('/write/borrow', logged_in, async (req, res, next) => {
-    try {
-        await Post.create({
-            title: req.body.title,
-            body: req.body.body,
-            price: req.body.price,
-            start_date: req.body.startDate,
-            end_date: req.body.endDate,
-            board: '빌려주세요',
-            user_id: req.user.id,
-        });
-    res.redirect('/post');
-    } catch (err) {
-        console.error(err);
-        return next(err);
+// 빌려주세요 게시판
+router.get('/borrow', async (req, res, next) => {
+    if (req.user) {
+        try {
+            const posts = await Post.findAll({
+                include: {
+                    model: User,
+                    attributes: ['nick'],
+                },
+                where: {
+                    board: '빌려주세요',
+                    address: req.user.address,
+                },
+                order: [
+                    ['createdAt', 'DESC']
+                ],
+            });
+            res.send(posts);
+        } catch (err) {
+            next(err);
+        }
+    } else {
+        try {
+            const posts = await Post.findAll({
+                include: {
+                    model: User,
+                    attributes: ['nick'],
+                },
+                where: {
+                    board: '빌려주세요',
+                },
+                order: [
+                    ['createdAt', 'DESC']
+                ],
+            });
+            res.send(posts);
+        } catch (err) {
+            next(err);
+        }
     }
 });
-router.post('/comment')
 // 이미지 업로드
-router.post('/img', logged_in, image_upload.array('img', 5), async (req, res, next) => {
+router.post('/img', imgUpload.array('img'), async (req, res, next) => {
+    let imgArr = [];
     for (let i = 0; i < req.files.length; i++) {
-        await Image.create({
-            name: req.files[i].filename,
-            url: req.files[i].path
-        });
+        console.log(`/img/${req.files[i].filename}`);
+        imgArr.push(`/img/${req.files[i].filename}`)
     }
-    res.redirect('/post');
+    res.send(imgArr);
+});
+// 빌려줄게요 작성
+router.post('/write/lend', loggedIn, async (req, res, next) => {
+    try {
+        const { 
+            title, body, price, startDate, endDate, date, url
+        } = req.body;
+        await Post.create({
+            nick: req.user.nick,
+            address: req.user.address,
+            userId: req.user.id,
+            title,
+            body,
+            price,
+            startDate,
+            endDate,
+            date,
+            url,
+            board: '빌려줄게요',
+        });
+        res.send('글 등록 성공');
+    } catch (err) {
+        return next(err);
+    }
+});
+// 빌려주세요 작성
+router.post('/write/borrow', loggedIn, async (req, res, next) => {
+    const { 
+        title, body, price, startDate, endDate, date
+    } = req.body;
+    try {
+        await Post.create({
+            nick: req.user.nick,
+            address: req.user.address,
+            userId: req.user.id,
+            title,
+            body,
+            price,
+            startDate,
+            endDate,
+            date,
+            board: '빌려주세요',
+        });
+        res.send('글 등록 성공');
+    } catch (err) {
+        return next(err);
+    }
 });
 // 게시글 조회
-router.get('/:id', async (req, res, next) => {
+router.get('/id?:id', async (req, res, next) => {
     try {
-        const post = await Post.findOne({ 
-            where: { id: req.params.id },
-            include: {
-                model: User,
-                attributes: ['nick', 'address'],
+        const post = await Post.findOne({
+            where: {
+                id: req.query.id
             },
         });
-        await res.render('show', { post });
-        // await res.send(post);
+        res.send(post);
     } catch (err) {
-        console.error(err);
-        return next(err); 
+        return next(err);
     }
 });
-// 게시글 검색
-router.get('/search/:searchWord', async(req, res) => {
-    try{
-        const result = await Post.findAll({
-            where: { title: { [like]: '%' + req.params.searchWord + '%' }},
-            include: {
-                model: User,
-                attributes: ['nick'],
+// 게시글 수정
+router.post('/update/id?:id', async (req, res, next) => {
+    try {
+        const { 
+            title, body, price, startDate, endDate, date
+        } = req.body;
+        await Post.update({
+            title,
+            body,
+            price,
+            startDate,
+            endDate,
+            date,
+            where: {
+                id: req.query.id
             },
         })
-        console.log(result);
-        res.send(result);
+        res.send("OK");
     } catch (err) {
-        console.error(err);
-        return next(err); 
+        return next(err);
     }
-})
+});
+// 게시글 삭제
+router.delete('/id?:id', async (req, res, next) => {
+    try {
+        await Post.destroy({
+            where: {
+                id: req.query.id
+            },
+        })
+        res.send("게시글 삭제");
+    } catch (err) {
+        return next(err);
+    }
+});
 
 module.exports = router;

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>chat-app</title>
+</head>
+
+<body>
+    <form action="/chat/send" method="post">
+        <input id="roomId" name="roomId" type="text" placeholder="채팅방 번호"><br>
+        <input id="body" name="body" type="text" placeholder="내용"><br>
+        <input id="sender" name="sender" type="text" placeholder="발신자"><br>
+        <input id="receiver" name="receiver" type="text" placeholder="수신자"><br>               
+        <button type="submit">보내기</button></div>
+    </form>
+    <br>
+    <form action="/chat/room" method="post">
+        <input id="roomId" name="roomId" type="text" placeholder="채팅방 번호"><br>
+        <input id="user1" name="user1" type="text" placeholder="사용자1"><br>
+        <input id="user2" name="user2" type="text" placeholder="사용자2"><br>               
+        <button type="submit">보내기</button></div>
+    </form>
+    
+</body>
+</html>
